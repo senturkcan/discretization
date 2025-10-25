@@ -25,21 +25,25 @@ print(f"Mean: {X_1d.mean():.4f}, Std: {X_1d.std():.4f}")
 print(f"Initial MI: {initial_mi:.4f}")
 
 # Test different k-means binning configurations
-bin_sizes_to_test = [4, 8, 16, 32, 64]
+bin_sizes_to_test = [4, 8, 16, 32, 64, 100, 140, 160, 180, 200]
 
-# Create subplots
-fig, axes = plt.subplots(2, 3, figsize=(18, 10))
+# Create subplots - need more space for 10 plots + original
+fig, axes = plt.subplots(3, 4, figsize=(20, 15))
 axes = axes.flatten()
 
 # Plot original data
-axes[0].hist(X_1d, bins=30, alpha=0.7, color='lightblue', edgecolor='black', density=True)
+counts_orig, _, patches_orig = axes[0].hist(X_1d, bins=30, alpha=0.7, color='lightblue', edgecolor='black')
 axes[0].set_title(f'Original Data (Column {col_idx})\nMI: {initial_mi:.4f}')
 axes[0].set_xlabel('Value')
-axes[0].set_ylabel('Density')
+axes[0].set_ylabel('Count')
 axes[0].grid(True, alpha=0.3)
 
 # Test each k-means binning configuration
 for i, n_bins in enumerate(bin_sizes_to_test, 1):
+    # Skip if we run out of subplot spaces
+    if i >= len(axes):
+        break
+
     # Create k-means discretizer
     discretizer = KBinsDiscretizer(n_bins=n_bins, encode="ordinal",
                                    strategy="kmeans", random_state=42)
@@ -53,29 +57,30 @@ for i, n_bins in enumerate(bin_sizes_to_test, 1):
     # Get bin edges
     bin_edges = discretizer.bin_edges_[0]
 
-    # Plot histogram with bin boundaries
-    axes[i].hist(X_1d, bins=30, alpha=0.5, color='lightblue', edgecolor='black',
-                 density=True, label='Original Data')
+    # Plot histogram using the actual bin edges from KBinsDiscretizer
+    counts, _, patches = axes[i].hist(X_1d, bins=bin_edges, alpha=0.7, color='lightblue',
+                                      edgecolor='black', density=False)
 
     # Add vertical lines for bin boundaries with numerical labels
     for j, edge in enumerate(bin_edges):
-        axes[i].axvline(x=edge, color='red', linestyle='--', linewidth=2, alpha=0.8)
-        # Add text labels for bin boundaries
-        axes[i].text(edge, axes[i].get_ylim()[1] * 0.9, f'{edge:.3f}',
-                     rotation=90, ha='right', va='top', fontsize=8,
-                     bbox=dict(boxstyle='round,pad=0.2', facecolor='white', alpha=0.8))
+        axes[i].axvline(x=edge, color='red', linestyle='--', linewidth=0.01, alpha=0.8)
+        # Add text labels for bin boundaries (only for smaller bin counts to avoid clutter)
+        if n_bins <= 32:
+            axes[i].text(edge, axes[i].get_ylim()[1] * 0.9, f'{edge:.2f}',
+                         rotation=90, ha='right', va='top', fontsize=7,
+                         bbox=dict(boxstyle='round,pad=0.1', facecolor='white', alpha=0.8))
 
-    # Color each bin region
-    for j in range(len(bin_edges) - 1):
-        axes[i].axvspan(bin_edges[j], bin_edges[j + 1], alpha=0.2,
-                        color=plt.cm.Set3(j % 12), label=f'Bin {j + 1}' if j < 5 else "")
+    # Color each bin region with different colors
+    for j, patch in enumerate(patches):
+        patch.set_facecolor(plt.cm.Set3(j % 12))
+        patch.set_alpha(0.7)
 
     # Set title and labels
     title = f'K-means - {n_bins} bins\nMI: {binned_mi:.4f} (Δ: {binned_mi - initial_mi:+.4f})'
 
     axes[i].set_title(title)
     axes[i].set_xlabel('Value')
-    axes[i].set_ylabel('Density')
+    axes[i].set_ylabel('Count')
     axes[i].grid(True, alpha=0.3)
 
     # Print bin information
@@ -85,6 +90,12 @@ for i, n_bins in enumerate(bin_sizes_to_test, 1):
     for j, (start, end) in enumerate(zip(bin_edges[:-1], bin_edges[1:])):
         count = np.sum((X_1d >= start) & (X_1d < end if j < len(bin_edges) - 2 else X_1d <= end))
         print(f"  Bin {j + 1}: [{start:.4f}, {end:.4f}{'(' if j < len(bin_edges) - 2 else ']'} - {count} samples")
+
+# Hide any unused subplots
+for j in range(len(bin_sizes_to_test) + 1, len(axes)):
+    axes[j].set_visible(False)
+
+plt.tight_layout()
 
 # Save the figure
 plt.savefig(f'column_{col_idx}_kmeans_binning_analysis.png', dpi=300, bbox_inches='tight')

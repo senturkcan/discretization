@@ -1,7 +1,7 @@
 # Simple binning comparison for columns 2-31 with multiple runs
 import pandas as pd
 import numpy as np
-from sklearn.feature_selection import mutual_info_classif
+from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
 from sklearn.preprocessing import KBinsDiscretizer, LabelEncoder
 
 # Multiple random states to eliminate luck
