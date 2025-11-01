@@ -1,4 +1,24 @@
-# Simple binning comparison for columns 2-31 with multiple runs
+#Guideline:
+#select dataset
+#find mutual information
+#apply KBinsDiscretizer from scikitlearn
+#find the new mutual information
+#make it dynamic so it can be applied for a lot of variations of binning
+
+#i did gridsearch manually on the whole training dataset at this code.
+#To be honest: There is a simpler way that i somehow didn't thought when i started this project.
+# that way is Using GridSearchCV by making a fake classifier so a pipeline can be used.
+# And sklearn.metrics.make_scorer can be used to change GridSearchCV(scoring). That would also make cross validation.
+
+
+#improvments: (MADE)
+#make it for all columns
+#make it for all possiable bin sizes (it will require checking best combinations automatically)
+
+
+
+
+#binning comparison for columns 2-31 with multiple runs
 import pandas as pd
 import numpy as np
 from sklearn.feature_selection import mutual_info_classif, mutual_info_regression
@@ -11,7 +31,7 @@ n_runs = len(random_states)
 # Load dataset
 df = pd.read_csv("wdbc.data", delimiter=",")
 
-# Encode target variable (M/B to 0/1)
+# Encode label
 le = LabelEncoder()
 y = le.fit_transform(df.iloc[:, 1])  # Convert M/B to numeric
 
@@ -55,7 +75,7 @@ for col in range(2, 32):
                         except:
                             continue
 
-                    # Calculate statistics if we have results
+                    # Calculate statistics if there are results
                     if mi_scores:
                         results.append({
                             'n_bins': bins,
@@ -110,4 +130,4 @@ for col in range(2, 32):
               f"(bins={best['n_bins']}, strategy={best['strategy']}, method={best['method']}, "
               f"range: {best['min_mi']:.4f}-{best['max_mi']:.4f})")
 
-print(f"Done! Each combination tested with {n_runs} different random initializations.")
+print(f"Each combination tested with {n_runs} different random initializations.")

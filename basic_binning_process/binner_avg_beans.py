@@ -11,8 +11,8 @@ df = pd.read_csv('beans.csv')
 n_samples = len(df)
 n_bins = int(1 + math.log2(n_samples))
 
-# Get continuous columns (columns 0-6, excluding the target column 7)
-continuous_cols = list(range(16))  # columns 0 to 6
+# Get continuous columns (manual)
+continuous_cols = list(range(16)) 
 
 # Apply binning to continuous columns
 discretizer = KBinsDiscretizer(n_bins=n_bins, encode='ordinal', strategy='quantile')
